@@ -1,0 +1,129 @@
+<html>
+<head>
+	<title>Chromeless Canvas</title>
+	<link rel="stylesheet" type="text/css" href="reset-min.css">
+	<style type="text/css" media="screen">
+	html, body {
+		background: #000000;
+	}
+	
+	* {
+		image-rendering: -moz-crisp-edges;
+	}
+	</style>
+</head>
+<body>
+<div id="main"></div>
+</body>
+<script type="text/javascript" src="engine.js"></script>
+<script type="text/javascript" src="jquery-min.js"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		engine.init("main", 256, 240, 2);
+		
+		engine.input.map("up", engine.input.UP);
+		engine.input.map("down", engine.input.DOWN);
+		engine.input.map("left", engine.input.LEFT);
+		engine.input.map("right", engine.input.RIGHT);
+		engine.input.map("d", engine.input.D);
+		engine.input.map("f", engine.input.F);
+		
+		engine.createObjClass("bgClass", {
+			y: -240,
+			z: -1,
+			process: function() {
+				this.y++;
+				if (this.y >= 0) this.y = -240;
+			},
+			draw: function(ctx) {
+				engine.drawTileMap(this.map, this.tileset, this.x, this.y, 16, 30, 16, 16);
+			},
+			tileset: engine.loadImage("tiles.png"),
+			map: [
+				[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
+				[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
+				[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
+				[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
+				[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
+				[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
+				[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
+				[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
+				[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
+				[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
+				[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
+				[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
+				[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
+				[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
+				[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
+				[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
+				[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
+				[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
+				[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
+				[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
+				[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
+				[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
+				[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
+				[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
+				[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
+				[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
+				[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
+				[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
+				[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
+				[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
+			],
+		});
+		engine.createObj("bgClass", "bg");
+		
+		engine.createObjClass("shotClass", {
+			group: "shots",
+			z: 99,
+			process: function() {
+				this.y -= 8;
+				if (!engine.inView(this.x, this.y, this.graphic.fWidth, this.graphic.fHeight)) {
+					engine.destroyObj(this.id);
+				}
+			},
+			graphic: {
+				img: engine.loadImage("shot.png"),
+				fWidth: 4,
+				fHeight: 8,
+			},
+		});
+		
+		engine.createObjClass("pcClass", {
+			x: 120,
+			y: 192,
+			z: 100,
+			shotDown: false,
+			process: function() {
+				if (engine.input.keys["up"]) this.y -= 2;
+				if (engine.input.keys["down"]) this.y += 2;
+				if (engine.input.keys["left"]) this.x -= 2;
+				if (engine.input.keys["right"]) this.x += 2;
+				
+				if (engine.input.keys["d"]) {
+					if (!this.shotDown) {
+						var shot = engine.createObj("shotClass");
+						shot.x = this.x + 6;
+						shot.y = this.y + 4;
+						this.shotDown = true;
+					}
+				} else {
+					this.shotDown = false;
+				}
+			},
+			graphic: {
+				img: engine.loadImage("ship.png"),
+				fWidth: 16,
+				fHeight: 16,
+				anim: true,
+				delay: 15,
+				frameCount: 2,
+			},
+		});
+		engine.createObj("pcClass", "pc");
+		
+		engine.start(30);
+	});
+</script>
+</html>
