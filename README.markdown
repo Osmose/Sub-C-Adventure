@@ -8,3 +8,8 @@ Install
 1. Download a copy of Mozilla Chromeless
 2. Download this repo and copy it's contents to examples/canvasTest under the Chromeless root directory.
 3. Run the included .bat file
+
+Controls
+--------
+ * Arrow Keys: Movement
+ * D: Shoot
