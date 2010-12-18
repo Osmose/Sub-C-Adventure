@@ -205,6 +205,8 @@ var engine = {
 			x: 0,
 			y: 0,
 			z: 0,
+			width: 0,
+			height: 0,
 		});
 		
 		this.classes[id] = objClass;
@@ -245,6 +247,10 @@ var engine = {
 				this.mergeProps(orig[prop], add[prop]);
 			}
 		}
+	},
+	
+	objCollide: function(obj1, obj2) {
+		return this.boxCollide(obj1.x, obj1.y, obj1.width, obj1.height, obj2.x, obj2.y, obj2.width, obj2.height);
 	},
 	
 	// Tilemaps
@@ -296,6 +302,10 @@ var engine = {
 		return img;
 	},
 	
+	rand: function(min, max) {
+		return min + Math.floor(Math.random() * (max - min));
+	},
+	
 	// "Internal" functions (lol private static)
 	safedrawimage: function (img, cx, cy, cwidth, cheight, dx, dy, dwidth, dheight) {
 		// Only draw within bounds
@@ -305,10 +315,10 @@ var engine = {
 	},
 	
 	// Does a for-in and avoids prototype-added stuff
-	forEach: function(object, func) {
+	forEach: function(object, context, func) {
 		for (var id in object) {
 			if (object.hasOwnProperty(id)) {
-				func(id, object[id]);
+				func(id, object[id], context);
 			}
 		}
 	},
