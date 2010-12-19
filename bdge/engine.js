@@ -6,6 +6,8 @@
  *
  *	@author Michael Kelly <Osmose1000@gmail.com>
  **/
+var bdge = {};
+
 var engine = {
 	canvas: null,
 	ctx: null,
@@ -66,8 +68,8 @@ var engine = {
 		}
 		
 		// Bind keyboard events
-		document.onkeydown = this.input.keydown;
-		document.onkeyup = this.input.keyup;
+		document.onkeydown = bdge.input.keydown;
+		document.onkeyup = bdge.input.keyup;
 		
 		container.appendChild(this.canvas);
 	},
@@ -145,36 +147,6 @@ var engine = {
 	
 	setDraw: function(proc) {
 		this.mydraw = proc;
-	},
-	
-	// Input
-	input: {
-		keys: {},
-		map: {},
-		keydown: function(e) {
-			var input = engine.input;
-			if (input.map[e.keyCode] != undefined) {
-				input.keys[input.map[e.keyCode]] = true;
-			}
-		},
-		keyup: function(e) {
-			var input = engine.input;
-			if (input.map[e.keyCode] != undefined) {
-				input.keys[input.map[e.keyCode]] = false;
-			}
-		},
-		map: function(name, keyCode) {
-			this.map[keyCode] = name;
-			this.keys[name] = false;
-		},
-
-		// Keycodes
-		DOWN: 40,
-		UP: 38,
-		LEFT: 37,
-		RIGHT: 39,
-		D: 68,
-		F: 70,
 	},
 	
 	// Objects
@@ -321,6 +293,47 @@ var engine = {
 				func(id, object[id], context);
 			}
 		}
+	},
+};
+
+bdge.input = {
+	keys: {},
+	map: {},
+	keydown: function(e) {
+		var input = bdge.input;
+		if (input.map[e.keyCode] != undefined) {
+			input.keys[input.map[e.keyCode]] = true;
+		}
+		
+		if (typeof this.customKeyDown == "function") this.customKeyDown(e);
+	},
+	keyup: function(e) {
+		var input = bdge.input;
+		if (input.map[e.keyCode] != undefined) {
+			input.keys[input.map[e.keyCode]] = false;
+		}
+		
+		if (typeof this.customKeyUp == "function") customKeyDown(e);
+	},
+	customKeyDown: null,
+	customKeyUp: null,
+	map: function(name, keyCode) {
+		this.map[keyCode] = name;
+		this.keys[name] = false;
+	},
+
+	// Keycodes
+	DOWN: 40,
+	UP: 38,
+	LEFT: 37,
+	RIGHT: 39,
+	D: 68,
+	F: 70,
+};
+
+bdge.util = {
+	showSplash: function(img, callback) {
+		 
 	},
 };
 

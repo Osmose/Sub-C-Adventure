@@ -15,19 +15,19 @@
 <body>
 <div id="main"></div>
 </body>
-<script type="text/javascript" src="engine.js"></script>
+<script type="text/javascript" src="bdge/engine.js"></script>
 <script type="text/javascript" src="jquery-min.js"></script>
 <script type="text/javascript">
 	var octoFrameCount = 0;
 	$(document).ready(function() {
 		engine.init("main", 256, 240, 2);
 		
-		engine.input.map("up", engine.input.UP);
-		engine.input.map("down", engine.input.DOWN);
-		engine.input.map("left", engine.input.LEFT);
-		engine.input.map("right", engine.input.RIGHT);
-		engine.input.map("d", engine.input.D);
-		engine.input.map("f", engine.input.F);
+		bdge.input.map("up", bdge.input.UP);
+		bdge.input.map("down", bdge.input.DOWN);
+		bdge.input.map("left", bdge.input.LEFT);
+		bdge.input.map("right", bdge.input.RIGHT);
+		bdge.input.map("d", bdge.input.D);
+		bdge.input.map("f", bdge.input.F);
 		
 		engine.createObjClass("bgClass", {
 			y: -240,
@@ -39,7 +39,7 @@
 			draw: function(ctx) {
 				engine.drawTileMap(this.map, this.tileset, this.x, this.y, 16, 30, 16, 16);
 			},
-			tileset: engine.loadImage("tiles.png"),
+			tileset: engine.loadImage("res/tiles.png"),
 			map: [
 				[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
 				[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
@@ -98,7 +98,7 @@
 				}
 			},
 			graphic: {
-				img: engine.loadImage("shot.png"),
+				img: engine.loadImage("res/shot.png"),
 				fWidth: 4,
 				fHeight: 8,
 			},
@@ -110,12 +110,12 @@
 			z: 100,
 			shotDown: false,
 			process: function() {
-				if (engine.input.keys["up"]) this.y -= 2;
-				if (engine.input.keys["down"]) this.y += 2;
-				if (engine.input.keys["left"]) this.x -= 3;
-				if (engine.input.keys["right"]) this.x += 3;
+				if (bdge.input.keys["up"]) this.y -= 2;
+				if (bdge.input.keys["down"]) this.y += 2;
+				if (bdge.input.keys["left"]) this.x -= 3;
+				if (bdge.input.keys["right"]) this.x += 3;
 				
-				if (engine.input.keys["d"]) {
+				if (bdge.input.keys["d"]) {
 					if (!this.shotDown) {
 						var shot = engine.createObj("shotClass");
 						shot.x = this.x + 6;
@@ -127,7 +127,7 @@
 				}
 			},
 			graphic: {
-				img: engine.loadImage("ship.png"),
+				img: engine.loadImage("res/ship.png"),
 				fWidth: 16,
 				fHeight: 16,
 				anim: true,
@@ -150,7 +150,7 @@
 				}
 			},
 			graphic: {
-				img: engine.loadImage("octo.png"),
+				img: engine.loadImage("res/octo.png"),
 				fWidth: 16,
 				fHeight: 16,
 				anim: true,
