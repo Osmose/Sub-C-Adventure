@@ -22,6 +22,9 @@
 	$(document).ready(function() {
 		engine.init("main", 256, 240, 2);
 		
+		engine.title = "Sub-C Adventure";
+		engine.showFps = true;
+		
 		bdge.input.map("up", bdge.input.UP);
 		bdge.input.map("down", bdge.input.DOWN);
 		bdge.input.map("left", bdge.input.LEFT);

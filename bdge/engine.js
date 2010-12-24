@@ -18,8 +18,14 @@ var engine = {
 	scale: 1,
 	fps: 30,
 	msPerFrame: 0,
+	frameskip: 1,
 	last: 0,
 	bgColor: "#000000",
+	title: "BDGE Game Engine",
+	showFps: false,
+	
+	// Each cycle the first function in the process queue is grabbed and executed
+	processQueue: [],
 	
 	// Classes contains the object classes
 	classes: {},
@@ -44,6 +50,11 @@ var engine = {
 	mydraw: null,
 	
 	init: function(containerId, width, height, scale) {
+		// Takeover errors ASAP
+		window.onerror = function(e) {
+		
+		};
+		
 		this.width = width;
 		this.height = height;
 		this.camera.width = width;
@@ -72,20 +83,39 @@ var engine = {
 		document.onkeyup = bdge.input.keyup;
 		
 		container.appendChild(this.canvas);
+		
+		
+	},
+	
+	frameCount: 0,
+	fpsMonitorDelay: new Date().getTime(),
+	monitorFps: function() {
+		this.frameCount++;
+		if (new Date().getTime() - this.fpsMonitorDelay > 1000) {
+			document.title = this.title + "(" + this.frameCount + ")";
+			this.frameCount = 0;
+			this.fpsMonitorDelay = new Date().getTime();
+		}
 	},
 	
 	// Main game loop
 	cycle: function() {
+		// Perform process queue function if it exists
+		var p = this.processQueue.shift();
+		if (typeof p == "function") p(this);
+	
 		this.process();
-		this.draw(engine.ctx);
+		this.monitorFps();
 		
-		var curTime = new Date().getTime();
-		var timeSinceLastFrame = curTime - this.last;
-		this.last = curTime;
-		
-		if (this.msPerFrame - timeSinceLastFrame > 0) {
-			window.setTimeout(this.timeoutCycle, this.msPerFrame - timeSinceLastFrame);
+		var allowedDelay = this.msPerFrame * this.frameskip;
+		var timeSinceLastFrame = this.getTimeSinceLastFrame();
+		if (allowedDelay > timeSinceLastFrame) {
+			this.draw(engine.ctx);
+			this.last = new Date().getTime();
+			this.frameskip = 1;
+			window.setTimeout(this.timeoutCycle, allowedDelay - timeSinceLastFrame);
 		} else {
+			this.frameskip++;
 			window.setTimeout(this.timeoutCycle, 1);
 		}
 	},
@@ -96,7 +126,11 @@ var engine = {
 		engine.cycle();
 	},
 	
-	start: function(fps) {
+	getTimeSinceLastFrame: function() {
+		return new Date().getTime() - this.last;
+	},
+	
+	start: function(fps, action) {
 		this.fps = fps;
 		this.msPerFrame = 1000 / this.fps;
 		this.last = new Date().getTime();
@@ -293,6 +327,34 @@ var engine = {
 				func(id, object[id], context);
 			}
 		}
+	},
+};
+
+bdge.log = {
+	logFile: null,
+	initLog: function(filename) {
+		this.logFile = new File(filename);
+		alert(write(this.logFile));
+	},
+	
+	write: function(str) {
+		// file is nsIFile, data is a string
+		var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
+			       createInstance(Components.interfaces.nsIFileOutputStream);
+
+		// use 0x02 | 0x10 to open file for appending.
+		foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
+		// write, create, truncate
+		// In a c file operation, we have no need to set file mode with or operation,
+		// directly using "r" or "w" usually.
+
+		// if you are sure there will never ever be any non-ascii text in data you can 
+		// also call foStream.writeData directly
+		var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].
+				createInstance(Components.interfaces.nsIConverterOutputStream);
+		converter.init(foStream, "UTF-8", 0, 0);
+		converter.writeString(data);
+		converter.close(); // this closes foStream
 	},
 };
 
