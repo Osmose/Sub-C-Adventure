@@ -51,8 +51,8 @@ var engine = {
 	
 	init: function(containerId, width, height, scale) {
 		// Takeover errors ASAP
-		window.onerror = function(e) {
-		
+		window.onerror = function(msg, url, line) {
+			alert(msg + "(" + url + ":" + line + ")");
 		};
 		
 		this.width = width;
@@ -85,6 +85,11 @@ var engine = {
 		container.appendChild(this.canvas);
 		
 		
+	},
+	
+	_gameInitFunction: null,
+	gameInit: function(func) {
+		_gameInitFunction = func;
 	},
 	
 	frameCount: 0,
@@ -130,12 +135,30 @@ var engine = {
 		return new Date().getTime() - this.last;
 	},
 	
-	start: function(fps, action) {
+	start: function(fps) {
 		this.fps = fps;
 		this.msPerFrame = 1000 / this.fps;
 		this.last = new Date().getTime();
 		
-		this.cycle();
+		if (_splashUrl != null) {
+			this._splashImg = new Image();
+			this._splashImg.onload = function() {
+				bdge.loader.load();
+				while (!bdge.loader.doneLoading) {
+					engine.safedrawimage(engine._splashImg, 0, 0, 256, 240, 0, 0, 256, 240);
+				}
+				
+				if (typeof engine._gameInitFunction == "function") engine._gameInitFunction();
+				engine.cycle();
+			};
+			this._splashImg.src = this._splashUrl;
+		}
+	},
+	
+	_splashImg: null,
+	_splashUrl: null,
+	setSplashImage: function(url) {
+		this._splashUrl = url;
 	},
 	
 	// Game logic and drawing
@@ -193,8 +216,9 @@ var engine = {
 			process: function() {},
 			draw: function(ctx) {
 				var g = this.graphic;
-				if (g.img != null && engine.inView(this.x, this.y, g.fWidth, g.fHeight)) {
-					engine.safedrawimage(g.img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
+				var img = bdge.get(g.img);
+				if (img != null && engine.inView(this.x, this.y, g.fWidth, g.fHeight)) {
+					engine.safedrawimage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
 				}
 			},
 			graphic: {
@@ -330,34 +354,6 @@ var engine = {
 	},
 };
 
-bdge.log = {
-	logFile: null,
-	initLog: function(filename) {
-		this.logFile = new File(filename);
-		alert(write(this.logFile));
-	},
-	
-	write: function(str) {
-		// file is nsIFile, data is a string
-		var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].
-			       createInstance(Components.interfaces.nsIFileOutputStream);
-
-		// use 0x02 | 0x10 to open file for appending.
-		foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0); 
-		// write, create, truncate
-		// In a c file operation, we have no need to set file mode with or operation,
-		// directly using "r" or "w" usually.
-
-		// if you are sure there will never ever be any non-ascii text in data you can 
-		// also call foStream.writeData directly
-		var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].
-				createInstance(Components.interfaces.nsIConverterOutputStream);
-		converter.init(foStream, "UTF-8", 0, 0);
-		converter.writeString(data);
-		converter.close(); // this closes foStream
-	},
-};
-
 bdge.input = {
 	keys: {},
 	map: {},
@@ -391,6 +387,48 @@ bdge.input = {
 	RIGHT: 39,
 	D: 68,
 	F: 70,
+};
+
+bdge.loader = {
+	_afterLoadingFunc: null,
+	_resources: {},
+	_resourceCount: 0,
+	
+	doneLoading: true,
+	
+	afterLoading: function(func) {
+		this._afterLoadingFunc = func;
+	},
+	
+	get: function(id) {
+		return this._resources[id].data;
+	},
+	
+	registerResource: function(id, url, type) {
+		_resources[id] = {
+			url: url,
+			type: type,
+			loaded: false,
+			data: null,
+		};
+		
+		this.doneLoading = false;
+	},
+	
+	load: function() {
+		for (id in this._resources) {
+			switch (this._resources[id].type) {
+				case "image":
+					this._resources[id].data = new Image();
+					this._resources[id].data.onload = function() {
+						bdge.loader._resourceCount++;
+						if (bdge.loader._resourceCount == bdge.loader._resources.length) bdge.loader.doneLoading = true;
+					};
+					this._resources[id].data.src = this._resources[id].url;
+					break;
+			}
+		}
+	},
 };
 
 bdge.util = {

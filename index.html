@@ -32,145 +32,147 @@
 		bdge.input.map("d", bdge.input.D);
 		bdge.input.map("f", bdge.input.F);
 		
-		engine.createObjClass("bgClass", {
-			y: -240,
-			z: -1,
-			process: function() {
-				this.y++;
-				if (this.y >= 0) this.y = -240;
-			},
-			draw: function(ctx) {
-				engine.drawTileMap(this.map, this.tileset, this.x, this.y, 16, 30, 16, 16);
-			},
-			tileset: engine.loadImage("res/tiles.png"),
-			map: [
-				[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
-				[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
-				[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
-				[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
-				[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
-				[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
-				[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
-				[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
-				[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
-				[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
-				[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
-				[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
-				[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
-				[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
-				[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
-				[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
-				[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
-				[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
-				[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
-				[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
-				[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
-				[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
-				[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
-				[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
-				[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
-				[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
-				[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
-				[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
-				[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
-				[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
-			],
-		});
-		engine.createObj("bgClass", "bg");
-		
-		engine.createObjClass("shotClass", {
-			group: "shots",
-			z: 99,
-			width: 4,
-			height: 8,
-			process: function() {
-				var oldY = this.y;
-				this.y -= 8;
-				
-				// Shot check
-				engine.forEach(engine.groups["enemy"], this, function(enemyId, enemy, shot) {
-					if (engine.boxCollide(shot.x, shot.y, shot.width, shot.height + (oldY - shot.y), enemy.x, enemy.y, enemy.width, enemy.height)) {
-						engine.destroyObj(enemyId);
-						engine.destroyObj(shot.id);
-						return;
+		engine.gameInit(function() {
+			engine.createObjClass("bgClass", {
+				y: -240,
+				z: -1,
+				process: function() {
+					this.y++;
+					if (this.y >= 0) this.y = -240;
+				},
+				draw: function(ctx) {
+					engine.drawTileMap(this.map, this.tileset, this.x, this.y, 16, 30, 16, 16);
+				},
+				tileset: engine.loadImage("res/tiles.png"),
+				map: [
+					[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
+					[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
+					[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
+					[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
+					[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
+					[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
+					[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
+					[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
+					[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
+					[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
+					[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
+					[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
+					[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
+					[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
+					[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
+					[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
+					[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
+					[4,3,0,0,0,0,0,0,0,0,0,0,0,0,4,4],
+					[4,0,0,0,2,0,0,0,0,0,0,2,0,2,4,4],
+					[4,4,4,1,0,0,0,0,0,0,0,0,0,0,3,4],
+					[4,4,4,4,0,0,0,0,0,0,0,0,0,1,3,4],
+					[4,3,4,3,0,0,0,0,0,0,0,0,0,4,4,4],
+					[4,3,3,3,0,1,0,0,0,1,0,1,4,4,4,4],
+					[4,0,3,0,0,0,0,0,0,0,0,0,4,4,4,4],
+					[4,2,0,0,0,0,0,0,0,0,0,0,3,4,4,4],
+					[4,0,1,0,0,0,0,0,0,0,0,0,3,3,4,4],
+					[4,4,4,0,0,0,0,0,0,2,0,0,0,3,3,4],
+					[4,4,4,0,0,0,0,0,0,0,0,0,1,4,3,4],
+					[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
+					[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
+				],
+			});
+			engine.createObj("bgClass", "bg");
+			
+			engine.createObjClass("shotClass", {
+				group: "shots",
+				z: 99,
+				width: 4,
+				height: 8,
+				process: function() {
+					var oldY = this.y;
+					this.y -= 8;
+					
+					// Shot check
+					engine.forEach(engine.groups["enemy"], this, function(enemyId, enemy, shot) {
+						if (engine.boxCollide(shot.x, shot.y, shot.width, shot.height + (oldY - shot.y), enemy.x, enemy.y, enemy.width, enemy.height)) {
+							engine.destroyObj(enemyId);
+							engine.destroyObj(shot.id);
+							return;
+						}
+					});
+					
+					if (!engine.inView(this.x, this.y, this.graphic.fWidth, this.graphic.fHeight)) {
+						engine.destroyObj(this.id);
 					}
-				});
-				
-				if (!engine.inView(this.x, this.y, this.graphic.fWidth, this.graphic.fHeight)) {
-					engine.destroyObj(this.id);
-				}
-			},
-			graphic: {
-				img: engine.loadImage("res/shot.png"),
-				fWidth: 4,
-				fHeight: 8,
-			},
-		});
-		
-		engine.createObjClass("pcClass", {
-			x: 120,
-			y: 192,
-			z: 100,
-			shotDown: false,
-			process: function() {
-				if (bdge.input.keys["up"]) this.y -= 2;
-				if (bdge.input.keys["down"]) this.y += 2;
-				if (bdge.input.keys["left"]) this.x -= 3;
-				if (bdge.input.keys["right"]) this.x += 3;
-				
-				if (bdge.input.keys["d"]) {
-					if (!this.shotDown) {
-						var shot = engine.createObj("shotClass");
-						shot.x = this.x + 6;
-						shot.y = this.y + 4;
-						this.shotDown = true;
+				},
+				graphic: {
+					img: engine.loadImage("res/shot.png"),
+					fWidth: 4,
+					fHeight: 8,
+				},
+			});
+			
+			engine.createObjClass("pcClass", {
+				x: 120,
+				y: 192,
+				z: 100,
+				shotDown: false,
+				process: function() {
+					if (bdge.input.keys["up"]) this.y -= 2;
+					if (bdge.input.keys["down"]) this.y += 2;
+					if (bdge.input.keys["left"]) this.x -= 3;
+					if (bdge.input.keys["right"]) this.x += 3;
+					
+					if (bdge.input.keys["d"]) {
+						if (!this.shotDown) {
+							var shot = engine.createObj("shotClass");
+							shot.x = this.x + 6;
+							shot.y = this.y + 4;
+							this.shotDown = true;
+						}
+					} else {
+						this.shotDown = false;
 					}
-				} else {
-					this.shotDown = false;
+				},
+				graphic: {
+					img: engine.loadImage("res/ship.png"),
+					fWidth: 16,
+					fHeight: 16,
+					anim: true,
+					delay: 15,
+					frameCount: 2,
+				},
+			});
+			engine.createObj("pcClass", "pc");
+			
+			engine.createObjClass("octoClass", {
+				z: 90,
+				width: 16,
+				height: 16,
+				group: "enemy",
+				process: function() {
+					this.y += 1.5;
+					
+					if (!engine.inView(this.x, this.y, this.graphic.fWidth, this.graphic.fHeight)) {
+						engine.destroyObj(this.id);
+					}
+				},
+				graphic: {
+					img: engine.loadImage("res/octo.png"),
+					fWidth: 16,
+					fHeight: 16,
+					anim: true,
+					delay: 10,
+					frameCount: 2,
+				},
+			});
+			
+			engine.setProcess(function() {
+				// Randomly generate octos at once every 30 - 90 frames
+				octoFrameCount--;
+				if (octoFrameCount <= 0) {
+					var octo = engine.createObj("octoClass");
+					octo.y = -12;
+					octo.x = engine.rand(32, 224);
+					octoFrameCount = engine.rand(30, 90);
 				}
-			},
-			graphic: {
-				img: engine.loadImage("res/ship.png"),
-				fWidth: 16,
-				fHeight: 16,
-				anim: true,
-				delay: 15,
-				frameCount: 2,
-			},
-		});
-		engine.createObj("pcClass", "pc");
-		
-		engine.createObjClass("octoClass", {
-			z: 90,
-			width: 16,
-			height: 16,
-			group: "enemy",
-			process: function() {
-				this.y += 1.5;
-				
-				if (!engine.inView(this.x, this.y, this.graphic.fWidth, this.graphic.fHeight)) {
-					engine.destroyObj(this.id);
-				}
-			},
-			graphic: {
-				img: engine.loadImage("res/octo.png"),
-				fWidth: 16,
-				fHeight: 16,
-				anim: true,
-				delay: 10,
-				frameCount: 2,
-			},
-		});
-		
-		engine.setProcess(function() {
-			// Randomly generate octos at once every 30 - 90 frames
-			octoFrameCount--;
-			if (octoFrameCount <= 0) {
-				var octo = engine.createObj("octoClass");
-				octo.y = -12;
-				octo.x = engine.rand(32, 224);
-				octoFrameCount = engine.rand(30, 90);
-			}
+			});
 		});
 		
 		engine.start(30);
