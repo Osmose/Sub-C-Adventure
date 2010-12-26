@@ -32,6 +32,13 @@
 		bdge.input.map("d", bdge.input.D);
 		bdge.input.map("f", bdge.input.F);
 		
+		bdge.loader.registerResource("tiles", "res/tiles.png", "image");
+		bdge.loader.registerResource("shot", "res/shot.png", "image");
+		bdge.loader.registerResource("ship", "res/ship.png", "image");
+		bdge.loader.registerResource("octo", "res/octo.png", "image");
+		
+		engine.setSplashImage("res/splash.png");
+		
 		engine.gameInit(function() {
 			engine.createObjClass("bgClass", {
 				y: -240,
@@ -41,9 +48,8 @@
 					if (this.y >= 0) this.y = -240;
 				},
 				draw: function(ctx) {
-					engine.drawTileMap(this.map, this.tileset, this.x, this.y, 16, 30, 16, 16);
+					engine.drawTileMap(this.map, bdge.loader.get("tiles"), this.x, this.y, 16, 30, 16, 16);
 				},
-				tileset: engine.loadImage("res/tiles.png"),
 				map: [
 					[4,4,3,2,0,0,0,0,0,0,0,0,0,3,4,4],
 					[4,3,0,0,0,0,0,0,0,0,0,1,0,0,3,4],
@@ -102,7 +108,7 @@
 					}
 				},
 				graphic: {
-					img: engine.loadImage("res/shot.png"),
+					img: "shot",
 					fWidth: 4,
 					fHeight: 8,
 				},
@@ -131,7 +137,7 @@
 					}
 				},
 				graphic: {
-					img: engine.loadImage("res/ship.png"),
+					img: "ship",
 					fWidth: 16,
 					fHeight: 16,
 					anim: true,
@@ -154,7 +160,7 @@
 					}
 				},
 				graphic: {
-					img: engine.loadImage("res/octo.png"),
+					img: "octo",
 					fWidth: 16,
 					fHeight: 16,
 					anim: true,

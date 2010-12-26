@@ -41,7 +41,7 @@ var engine = {
 		x: 0,
 		y: 0,
 		width: 256,
-		height: 240,
+		height: 240
 	},
 	
 	isChromeless: navigator.userAgent.indexOf("Chromeless") !== -1,
@@ -89,7 +89,7 @@ var engine = {
 	
 	_gameInitFunction: null,
 	gameInit: function(func) {
-		_gameInitFunction = func;
+		this._gameInitFunction = func;
 	},
 	
 	frameCount: 0,
@@ -140,16 +140,20 @@ var engine = {
 		this.msPerFrame = 1000 / this.fps;
 		this.last = new Date().getTime();
 		
-		if (_splashUrl != null) {
+		if (this._splashUrl != null) {
 			this._splashImg = new Image();
 			this._splashImg.onload = function() {
 				bdge.loader.load();
-				while (!bdge.loader.doneLoading) {
-					engine.safedrawimage(engine._splashImg, 0, 0, 256, 240, 0, 0, 256, 240);
-				}
-				
-				if (typeof engine._gameInitFunction == "function") engine._gameInitFunction();
-				engine.cycle();
+				bdge.util.wait(
+					function() {
+						engine.safedrawimage(engine._splashImg, 0, 0, 256, 240, 0, 0, 256, 240);
+						return bdge.loader.doneLoading;
+					}, 
+					function() {
+						if (typeof engine._gameInitFunction == "function") engine._gameInitFunction();
+						engine.cycle();
+					}
+				);
 			};
 			this._splashImg.src = this._splashUrl;
 		}
@@ -216,7 +220,7 @@ var engine = {
 			process: function() {},
 			draw: function(ctx) {
 				var g = this.graphic;
-				var img = bdge.get(g.img);
+				var img = bdge.loader.get(g.img);
 				if (img != null && engine.inView(this.x, this.y, g.fWidth, g.fHeight)) {
 					engine.safedrawimage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
 				}
@@ -230,13 +234,13 @@ var engine = {
 				fWidth: 0,
 				fHeight: 0,
 				delay: 0,	// NOTE: Delay is in frames, not seconds
-				framesSinceLast: 0,
+				framesSinceLast: 0
 			},
 			x: 0,
 			y: 0,
 			z: 0,
 			width: 0,
-			height: 0,
+			height: 0
 		});
 		
 		this.classes[id] = objClass;
@@ -249,7 +253,7 @@ var engine = {
 		
 		var obj = $.extend(true, {}, this.classes[classId]);
 		this.mergeProps(obj, {
-			id: objId,
+			id: objId
 		});
 		
 		this.groups[obj.group][objId] = obj;
@@ -262,11 +266,13 @@ var engine = {
 	destroyObj: function (objId) {
 		var obj = this.objects[objId];
 		
-		delete this.objects[objId];
-		delete this.groups[obj.group][objId];
-		this.zOrderList.removeItem(obj, function(a, b) {
-			return (a.id == b.id ? 0 : -1);
-		});
+		if (typeof obj != undefined) {
+			delete this.objects[objId];
+			delete this.groups[obj.group][objId];
+			this.zOrderList.removeItem(obj, function(a, b) {
+				return (a.id == b.id ? 0 : -1);
+			});
+		}
 	},
 	
 	mergeProps: function (orig, add) {
@@ -351,7 +357,7 @@ var engine = {
 				func(id, object[id], context);
 			}
 		}
-	},
+	}
 };
 
 bdge.input = {
@@ -386,32 +392,29 @@ bdge.input = {
 	LEFT: 37,
 	RIGHT: 39,
 	D: 68,
-	F: 70,
+	F: 70
 };
 
 bdge.loader = {
-	_afterLoadingFunc: null,
 	_resources: {},
 	_resourceCount: 0,
+	_resourcesLoaded: 0,
 	
 	doneLoading: true,
-	
-	afterLoading: function(func) {
-		this._afterLoadingFunc = func;
-	},
 	
 	get: function(id) {
 		return this._resources[id].data;
 	},
 	
 	registerResource: function(id, url, type) {
-		_resources[id] = {
+		this._resources[id] = {
 			url: url,
 			type: type,
 			loaded: false,
-			data: null,
+			data: null
 		};
 		
+		this._resourceCount++;
 		this.doneLoading = false;
 	},
 	
@@ -421,20 +424,32 @@ bdge.loader = {
 				case "image":
 					this._resources[id].data = new Image();
 					this._resources[id].data.onload = function() {
-						bdge.loader._resourceCount++;
-						if (bdge.loader._resourceCount == bdge.loader._resources.length) bdge.loader.doneLoading = true;
+						bdge.loader._resourcesLoaded++;
+						if (bdge.loader._resourceCount == bdge.loader._resourcesLoaded) bdge.loader.doneLoading = true;
 					};
 					this._resources[id].data.src = this._resources[id].url;
 					break;
 			}
 		}
-	},
+	}
 };
 
 bdge.util = {
 	showSplash: function(img, callback) {
 		 
 	},
+	
+	wait: function(conditionFunc, finishFunc) {
+		var waitFunc = function() {
+			if (conditionFunc()) {
+				finishFunc();
+			} else {
+				setTimeout(waitFunc, 10);
+			}
+		};
+		
+		waitFunc();
+	}
 };
 
 /**
