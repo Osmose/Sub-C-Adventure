@@ -17,9 +17,6 @@ var engine = {
 	scaleHeight: 240,
 	scale: 1,
 	fps: 30,
-	msPerFrame: 0,
-	frameskip: 1,
-	last: 0,
 	bgColor: "#000000",
 	title: "BDGE Game Engine",
 	showFps: false,
@@ -92,53 +89,71 @@ var engine = {
 		this._gameInitFunction = func;
 	},
 	
-	frameCount: 0,
+	_drawFrames: 0,
+	_processFrames: 0,
 	fpsMonitorDelay: new Date().getTime(),
 	monitorFps: function() {
-		this.frameCount++;
 		if (new Date().getTime() - this.fpsMonitorDelay > 1000) {
-			document.title = this.title + "(" + this.frameCount + ")";
-			this.frameCount = 0;
+			document.title = this.title + "(Proc:" + this._processFrames + ",Draw:" + this._drawFrames + ")";
+			this._drawFrames = 0;
+			this._processFrames = 0;
 			this.fpsMonitorDelay = new Date().getTime();
 		}
 	},
 	
 	// Main game loop
+	_msPerFrame: 0,
+	_frameskip: 0,
+	_fskid: 0,
+	_frameStart: 0,
+	_timing: {
+		lowidle: 0,
+		hiidle: 5,
+		minfs: 0,
+		maxfs: 5
+	},
 	cycle: function() {
+		this._frameStart = (new Date()).getTime();
+		
 		// Perform process queue function if it exists
 		var p = this.processQueue.shift();
 		if (typeof p == "function") p(this);
 	
 		this.process();
+		this._processFrames++;
+		
+		// Draw if we can afford it
+		if (this._fskid >= this._frameskip) {
+			this.draw(this.ctx);
+			this._drawFrames++;
+			this._fskid = 0;
+		} else {
+			this._fskid++;
+		}
+		
 		this.monitorFps();
 		
-		var allowedDelay = this.msPerFrame * this.frameskip;
-		var timeSinceLastFrame = this.getTimeSinceLastFrame();
-		if (allowedDelay > timeSinceLastFrame) {
-			this.draw(engine.ctx);
-			this.last = new Date().getTime();
-			this.frameskip = 1;
-			window.setTimeout(this.timeoutCycle, allowedDelay - timeSinceLastFrame);
-		} else {
-			this.frameskip++;
-			window.setTimeout(this.timeoutCycle, 1);
-		}
+		// Timing scheme adapted from Akihabara :D
+		// Set framestart to when the next frame SHOULD'VE started
+		this._frameStart = this._msPerFrame - ((new Date()).getTime() - this._frameStart);
+		
+		// Adjust frameskip if we're moving too slow or too quickly
+		if (this._frameStart < this._timing.lowidle && this._frameskip < this._timing.maxfs) this._frameskip++;
+		if (this._frameStart > this._timing.hiidle && this._frameskip > this._timing.minfs) this._frameskip--;
+		
+		// Wait (or not if we can't afford it)
+		setTimeout(this._timeoutCycle, (this._frameStart <= 0 ? 1 : this._frameStart));
 	},
 	
 	// SetTimeout doesn't preserve the scope, so we have to use
 	// this function instead because I like the this keyword :D
-	timeoutCycle: function() {
+	_timeoutCycle: function() {
 		engine.cycle();
-	},
-	
-	getTimeSinceLastFrame: function() {
-		return new Date().getTime() - this.last;
 	},
 	
 	start: function(fps) {
 		this.fps = fps;
-		this.msPerFrame = 1000 / this.fps;
-		this.last = new Date().getTime();
+		this._msPerFrame = 1000 / this.fps;
 		
 		if (this._splashUrl != null) {
 			this._splashImg = new Image();
@@ -330,33 +345,12 @@ var engine = {
 		return this.boxCollide(x, y, width, height, this.camera.x, this.camera.y, this.camera.width, this.camera.height);
 	},
 	
-	// Utility
-	loadImage: function (path) {
-		var img = new Image();
-		img.src = path;
-		
-		return img;
-	},
-	
-	rand: function(min, max) {
-		return min + Math.floor(Math.random() * (max - min));
-	},
-	
 	// "Internal" functions (lol private static)
 	safedrawimage: function (img, cx, cy, cwidth, cheight, dx, dy, dwidth, dheight) {
 		// Only draw within bounds
 		this.ctx.save();
 		this.ctx.drawImage(img, cx, cy, cwidth, cheight, dx, dy, dwidth, dheight);
 		this.ctx.restore();
-	},
-	
-	// Does a for-in and avoids prototype-added stuff
-	forEach: function(object, context, func) {
-		for (var id in object) {
-			if (object.hasOwnProperty(id)) {
-				func(id, object[id], context);
-			}
-		}
 	}
 };
 
@@ -435,10 +429,6 @@ bdge.loader = {
 };
 
 bdge.util = {
-	showSplash: function(img, callback) {
-		 
-	},
-	
 	wait: function(conditionFunc, finishFunc) {
 		var waitFunc = function() {
 			if (conditionFunc()) {
@@ -449,6 +439,19 @@ bdge.util = {
 		};
 		
 		waitFunc();
+	},
+	
+	rand: function(min, max) {
+		return min + Math.floor(Math.random() * (max - min));
+	},
+	
+	// Does a for-in and avoids prototype-added stuff
+	forEach: function(object, func) {
+		for (var id in object) {
+			if (object.hasOwnProperty(id)) {
+				func(id, object[id]);
+			}
+		}
 	}
 };
 
@@ -491,7 +494,7 @@ function SortedArray(comparitor) {
 		}
 		
 		return false;
-	}
+	};
 	
 	// First argument to func is the index, second is value
 	this.iter = function(func) {

@@ -95,7 +95,8 @@
 					this.y -= 8;
 					
 					// Shot check
-					engine.forEach(engine.groups["enemy"], this, function(enemyId, enemy, shot) {
+					var shot = this;
+					bdge.util.forEach(engine.groups["enemy"], function(enemyId, enemy) {
 						if (engine.boxCollide(shot.x, shot.y, shot.width, shot.height + (oldY - shot.y), enemy.x, enemy.y, enemy.width, enemy.height)) {
 							engine.destroyObj(enemyId);
 							engine.destroyObj(shot.id);
@@ -175,8 +176,8 @@
 				if (octoFrameCount <= 0) {
 					var octo = engine.createObj("octoClass");
 					octo.y = -12;
-					octo.x = engine.rand(32, 224);
-					octoFrameCount = engine.rand(30, 90);
+					octo.x = bdge.util.rand(32, 224);
+					octoFrameCount = bdge.util.rand(30, 90);
 				}
 			});
 		});
