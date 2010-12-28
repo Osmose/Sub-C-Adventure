@@ -11,6 +11,8 @@ var bdge = {};
 var engine = {
 	canvas: null,
 	ctx: null,
+	viewCanvas: null,
+	viewCtx: null,
 	width: 256,
 	height: 240,
 	scaleWidth: 256,
@@ -62,8 +64,13 @@ var engine = {
 		this.scaleHeight = height * scale;
 	
 		var container = document.getElementById(containerId);
+		
+		// Buffer
 		this.canvas = document.createElement("canvas");
 		this.ctx = this.canvas.getContext("2d");
+		
+		this.viewCanvas = document.createElement("canvas");
+		this.viewCtx = this.viewCanvas.getContext("2d");
 		
 		this.canvas.setAttribute('height', height);
 		this.canvas.setAttribute('width', width);
@@ -79,9 +86,7 @@ var engine = {
 		document.onkeydown = bdge.input.keydown;
 		document.onkeyup = bdge.input.keyup;
 		
-		container.appendChild(this.canvas);
-		
-		
+		container.appendChild(this.viewCanvas);
 	},
 	
 	_gameInitFunction: null,
@@ -161,7 +166,7 @@ var engine = {
 				bdge.loader.load();
 				bdge.util.wait(
 					function() {
-						engine.safedrawimage(engine._splashImg, 0, 0, 256, 240, 0, 0, 256, 240);
+						engine.ctx.drawImage(engine._splashImg, 0, 0, 256, 240, 0, 0, 256, 240);
 						return bdge.loader.doneLoading;
 					}, 
 					function() {
@@ -237,15 +242,20 @@ var engine = {
 				var g = this.graphic;
 				var img = bdge.loader.get(g.img);
 				if (img != null && engine.inView(this.x, this.y, g.fWidth, g.fHeight)) {
-					engine.safedrawimage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
+					engine.ctx.save();
+					engine.ctx.scale((g.hflip ? -g.scale : g.scale), (g.vflip ? -g.scale : g.scale));
+					engine.ctx.drawImage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
+					engine.ctx.restore();
 				}
 			},
 			graphic: {
 				img: null,
+				vflip: false,
+				hflip: false,
+				scale: 1,
 				anim: false,
 				curFrame: 0,
 				frameCount: 0,
-				scale: 1,
 				fWidth: 0,
 				fHeight: 0,
 				delay: 0,	// NOTE: Delay is in frames, not seconds
@@ -310,7 +320,7 @@ var engine = {
 		for (var ty = 0; ty < height; ty++) {
 			for (var tx = 0; tx < width; tx++) {
 				tileNum = map[ty][tx];
-				this.safedrawimage(img, tileNum * tileWidth, 0, tileWidth, tileHeight, dx + (tx * tileWidth), dy + (ty * tileHeight), tileWidth, tileHeight);
+				this.ctx.drawImage(img, tileNum * tileWidth, 0, tileWidth, tileHeight, dx + (tx * tileWidth), dy + (ty * tileHeight), tileWidth, tileHeight);
 			}
 		}
 	},
@@ -345,11 +355,28 @@ var engine = {
 		return this.boxCollide(x, y, width, height, this.camera.x, this.camera.y, this.camera.width, this.camera.height);
 	},
 	
-	// "Internal" functions (lol private static)
-	safedrawimage: function (img, cx, cy, cwidth, cheight, dx, dy, dwidth, dheight) {
-		// Only draw within bounds
+	globalFont: "10px Arial",
+	globalFontFill: "#000000",
+	drawText: function(text, x, y, fill, font) {
+		if (typeof fill == "undefined") fill = this.globalFontFill;
+		if (typeof font == "undefined") font = this.globalFont;
+		
 		this.ctx.save();
-		this.ctx.drawImage(img, cx, cy, cwidth, cheight, dx, dy, dwidth, dheight);
+		this.ctx.font = font;
+		this.ctx.fillStyle = fill;
+		this.ctx.textAlign = "left";
+		this.ctx.textBaseline = "top";
+		this.ctx.fillText(text, x + this.camera.x, y + this.camera.y);
+		this.ctx.restore();
+	},
+	
+	globalRectFill: "#000000",
+	drawRect: function(x, y, width, height, fill) {
+		if (typeof fill == "undefined") fill = this.globalRectFill;
+		
+		this.ctx.save();
+		this.ctx.fillStyle = fill;
+		this.ctx.fillRect(x, y, width, height);
 		this.ctx.restore();
 	}
 };
