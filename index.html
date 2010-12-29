@@ -12,8 +12,8 @@
 	}
 	
 	@font-face {
-		font-family: KongText;
-		src: url("res/kongtext.ttf");
+		font-family: Press Start K;
+		src: url("res/prstartk.ttf");
 	}
 	</style>
 </head>
@@ -24,7 +24,7 @@
 <script type="text/javascript" src="jquery-min.js"></script>
 <script type="text/javascript">
 var waveDelay = 0;
-var wavePhase = 0;
+var curPhase = 0;
 var curWave = null;
 var waves = [];
 
@@ -169,6 +169,10 @@ $(document).ready(function() {
 					engine.destroyObj(this.id);
 				}
 			},
+			parentWave: null,
+			onDestroy: function() {
+				if (this.parentWave != null) this.parentWave.enemyDead();
+			},
 			graphic: {
 				img: "slug",
 				fWidth: 16,
@@ -179,34 +183,60 @@ $(document).ready(function() {
 			},
 		});
 		
-		var slugWave = new EnemyWave(10, 30, function(phase) {
-			var slug = engine.createObj("slugClass");
-			slug.y = -12;
-			slug.x = bdge.util.rand(3, 14) * 16;
-			slug.hflip = bdge.util.rand(0, 100) > 50;
+		// Spawns 10 slugs every 32 frames and waits for them to be gone
+		var slugWave = new EnemyWave({
+			phaseCount: 10,
+			delay: 32,
+			enemyCount: 10,
+			action: function(phase) {
+				var slug = engine.createObj("slugClass");
+				slug.y = -12;
+				slug.x = bdge.util.rand(3, 14) * 16;
+				slug.hflip = bdge.util.rand(0, 100) > 50;
+				slug.parentWave = this;
+			}
 		});
 		
 		waves.push(slugWave);
 		
+		var drawScore = function () {
+			engine.drawRect(0, 0, 256, 16);
+			engine.drawText("SCORE:", 8, 4);
+		};
+		
+		/**
+		 * Waves work in phases. Each phase lasts a certain amount of time,
+		 * and when they're all done, we wait for the wave to be marked as
+		 * over, and move onto the next wave. 
+		 *
+		 * A phase typically corresponds to spawning a single enemy at a set
+		 * delay. 
+		 */
 		engine.setProcess(function() {
+			// Grab the next wave if the current wave is done. 
+			// If there are no more waves, game over!
 			if (curWave == null) {
 				curWave = waves.shift();
 				
 				if (typeof curWave == "undefined") {
 					engine.setDraw(function() {
-						engine.drawRect(84, 112, 220, 132);
-						engine.drawText("Game Over!", 88, 116);
+						drawScore();
+						
+						engine.drawRect(88, 112, 80, 16);
+						engine.drawText("GAME OVER", 92, 116);
 					});
 					engine.setProcess(function() {});
 					return;
 				} else {
-					wavePhase = 0;
+					curPhase = 0;
 					waveDelay = curWave.delay;
 				}
 			}
 			
-			if (curWave.phaseCount <= curPhase && curWave.waveDone) {
-				curWave = null;
+			// If the phases are done, wait until the wave ends and kill it
+			// Otherwise, continue the current phase or move to the next one.
+			if (curWave.phaseCount <= curPhase) {
+				if (curWave.waveDone) curWave = null;
 			} else if (waveDelay >= curWave.delay) {
 				curWave.action(curPhase);
 				curPhase++;
@@ -217,11 +247,10 @@ $(document).ready(function() {
 		});
 		
 		engine.setDraw(function() {
-			engine.drawRect(0, 0, 256, 16);
-			engine.drawText("Score:", 8, 4);
+			drawScore();
 		});
 		
-		engine.globalFont = "8px KongText";
+		engine.globalFont = "8px Press Start K";
 		engine.globalFontFill = "#FFFFFF";
 	});
 	
@@ -231,11 +260,19 @@ $(document).ready(function() {
 /**
  * An EnemyWave, as the name suggests, defines a preset wave of enemies.
  */
-var EnemyWave = function(phases, delay, actionFunc) {
-	this.phaseCount = phases;
-	this.delay = delay;
-	this.action = actionFunc;
+var EnemyWave = function(props) {
+	this.phaseCount = props.phaseCount;
+	this.delay = props.delay;
+	this.action = props.action;
 	this.waveDone = false;
+	
+	if (typeof props.enemyCount != "undefined") {
+		this.enemyCount = props.enemyCount;
+		this.enemyDead = function() {
+			this.enemyCount--;
+			if (this.enemyCount <= 0) this.waveDone = true;
+		};
+	}
 };
 </script>
 </html>

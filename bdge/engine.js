@@ -68,14 +68,15 @@ var engine = {
 		// Buffer
 		this.canvas = document.createElement("canvas");
 		this.ctx = this.canvas.getContext("2d");
+		this.canvas.setAttribute('height', height);
+		this.canvas.setAttribute('width', width);
 		
 		this.viewCanvas = document.createElement("canvas");
 		this.viewCtx = this.viewCanvas.getContext("2d");
-		
-		this.canvas.setAttribute('height', height);
-		this.canvas.setAttribute('width', width);
-		this.canvas.style.width = this.scaleWidth + "px";
-		this.canvas.style.height = this.scaleHeight + "px";
+		this.viewCanvas.setAttribute('height', height);
+		this.viewCanvas.setAttribute('width', width);
+		this.viewCanvas.style.width = this.scaleWidth + "px";
+		this.viewCanvas.style.height = this.scaleHeight + "px";
 		
 		if (this.isChromeless) {
 			window.innerWidth = this.scaleWidth;
@@ -220,6 +221,9 @@ var engine = {
 		
 		// Custom drawing
 		if (typeof this.mydraw == "function") this.mydraw(ctx);
+		
+		// Draw buffer to screen
+		this.viewCtx.drawImage(this.canvas, 0, 0);
 	},
 	
 	setProcess: function(proc) {
@@ -297,6 +301,10 @@ var engine = {
 			this.zOrderList.removeItem(obj, function(a, b) {
 				return (a.id == b.id ? 0 : -1);
 			});
+			
+			if (typeof obj.onDestroy == "function") {
+				obj.onDestroy();
+			}
 		}
 	},
 	
