@@ -247,8 +247,17 @@ var engine = {
 				var img = bdge.loader.get(g.img);
 				if (img != null && engine.inView(this.x, this.y, g.fWidth, g.fHeight)) {
 					engine.ctx.save();
-					engine.ctx.scale((g.hflip ? -g.scale : g.scale), (g.vflip ? -g.scale : g.scale));
-					engine.ctx.drawImage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, this.x - engine.camera.x, this.y - engine.camera.y, g.fWidth, g.fHeight);
+					
+					engine.ctx.translate((g.hflip ? g.fWidth : 0), (g.vflip ? g.fHeight : 0));
+					engine.ctx.scale((g.hflip ? -1 : 1), (g.vflip ? -1 : 1));
+					
+					var dx = this.x - engine.camera.x;
+					var dy = this.y - engine.camera.y;
+					
+					if (g.hflip) dx = -dx;
+					if (g.vflip) dy = -dy;
+					
+					engine.ctx.drawImage(img, g.curFrame * g.fWidth, 0, g.fWidth, g.fHeight, dx, dy, g.fWidth, g.fHeight);
 					engine.ctx.restore();
 				}
 			},
@@ -256,7 +265,6 @@ var engine = {
 				img: null,
 				vflip: false,
 				hflip: false,
-				scale: 1,
 				anim: false,
 				curFrame: 0,
 				frameCount: 0,
@@ -421,7 +429,8 @@ bdge.input = {
 	LEFT: 37,
 	RIGHT: 39,
 	D: 68,
-	F: 70
+	F: 70,
+	ESC: 27
 };
 
 bdge.loader = {

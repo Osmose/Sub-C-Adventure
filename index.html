@@ -23,12 +23,12 @@
 <script type="text/javascript" src="bdge/engine.js"></script>
 <script type="text/javascript" src="jquery-min.js"></script>
 <script type="text/javascript">
-var waveDelay = 0;
-var curPhase = 0;
-var curWave = null;
-var waves = [];
-
 $(document).ready(function() {
+	var waveDelay = 0;
+	var curPhase = 0;
+	var curWave = null;
+	var waves = [];
+	
 	engine.init("main", 256, 240, 2);
 	
 	engine.title = "Sub-C Adventure";
@@ -40,6 +40,7 @@ $(document).ready(function() {
 	bdge.input.map("right", bdge.input.RIGHT);
 	bdge.input.map("d", bdge.input.D);
 	bdge.input.map("f", bdge.input.F);
+	bdge.input.map("esc", bdge.input.ESC);
 	
 	bdge.loader.registerResource("tiles", "res/tiles.png", "image");
 	bdge.loader.registerResource("shot", "res/shot.png", "image");
@@ -55,6 +56,9 @@ $(document).ready(function() {
 			process: function() {
 				this.y++;
 				if (this.y >= 0) this.y = -240;
+				
+				// Move player backwards
+				if (this.collides(pc.x, pc.y, pc.graphic.fWidth, pc.graphic.fHeight)) pc.y++;
 			},
 			draw: function(ctx) {
 				engine.drawTileMap(this.map, bdge.loader.get("tiles"), this.x, this.y, 16, 30, 16, 16);
@@ -91,8 +95,33 @@ $(document).ready(function() {
 				[4,4,4,0,0,0,2,0,0,0,0,0,0,4,4,4],
 				[4,4,3,0,1,0,0,0,0,0,0,0,2,3,4,4],
 			],
+			collides: function(x, y, width, height) {
+				for (var cx = x; cx < x + width; cx += 16) {
+					for (var cy = y; cy < y + height; cy += 16) {
+						if (this.isSolid(Math.floor(cx / 16), Math.floor((cy - this.y) / 16))) return true;
+					}
+				}
+				
+				return false;
+			},
+			drawCollision: function(x, y, width, height) {
+				for (var cx = x; cx < x + width; cx += 16) {
+					for (var cy = y; cy < y + height; cy += 16) {
+						engine.drawRect(Math.floor(cx / 16) * 16, (Math.floor((cy - this.y) / 16) * 16) - this.y, 16, 16);
+					}
+				}
+			},
+			isSolid: function(x, y) {
+				switch (this.map[y][x]) {
+					case 3:
+					case 4:
+						return true;
+					default:
+						return false;
+				}
+			}
 		});
-		engine.createObj("bgClass", "bg");
+		var tilemap = engine.createObj("bgClass", "bg");
 		
 		engine.createObjClass("shotClass", {
 			group: "shots",
@@ -130,10 +159,16 @@ $(document).ready(function() {
 			z: 100,
 			shotDown: false,
 			process: function() {
-				if (bdge.input.keys["up"]) this.y -= 2;
-				if (bdge.input.keys["down"]) this.y += 2;
-				if (bdge.input.keys["left"]) this.x -= 3;
-				if (bdge.input.keys["right"]) this.x += 3;
+				var dy = 0, dx = 0;
+				if (bdge.input.keys["up"]) dy -= 2;
+				if (bdge.input.keys["down"]) dy += 2;
+				if (bdge.input.keys["left"]) dx -= 3;
+				if (bdge.input.keys["right"]) dx += 3;
+				
+				if (!tilemap.collides(this.x + dx, this.y + dy, this.graphic.fWidth, this.graphic.fHeight)) {
+					this.y += dy;
+					this.x += dx;
+				}
 				
 				if (bdge.input.keys["d"]) {
 					if (!this.shotDown) {
@@ -155,7 +190,7 @@ $(document).ready(function() {
 				frameCount: 2,
 			},
 		});
-		engine.createObj("pcClass", "pc");
+		var pc = engine.createObj("pcClass", "pc");
 		
 		engine.createObjClass("slugClass", {
 			z: 90,
@@ -191,8 +226,8 @@ $(document).ready(function() {
 			action: function(phase) {
 				var slug = engine.createObj("slugClass");
 				slug.y = -12;
-				slug.x = bdge.util.rand(3, 14) * 16;
-				slug.hflip = bdge.util.rand(0, 100) > 50;
+				slug.x = bdge.util.rand(4, 13) * 16;
+				slug.graphic.hflip = bdge.util.rand(0, 100) > 50;
 				slug.parentWave = this;
 			}
 		});
@@ -221,6 +256,7 @@ $(document).ready(function() {
 				if (typeof curWave == "undefined") {
 					engine.setDraw(function() {
 						drawScore();
+						tilemap.drawCollision(pc.x, pc.y, pc.graphic.fWidth, pc.graphic.fHeight);
 						
 						engine.drawRect(88, 112, 80, 16);
 						engine.drawText("GAME OVER", 92, 116);
@@ -248,6 +284,7 @@ $(document).ready(function() {
 		
 		engine.setDraw(function() {
 			drawScore();
+			tilemap.drawCollision(pc.x, pc.y, pc.graphic.fWidth, pc.graphic.fHeight);
 		});
 		
 		engine.globalFont = "8px Press Start K";
