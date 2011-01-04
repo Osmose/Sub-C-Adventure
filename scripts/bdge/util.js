@@ -99,55 +99,70 @@ exports.replaceProperties = function(base, replace) {
     });
     
     return newObj;
-}
+};
+
+/**
+ * Copies properties from the prototype of super to the prototype of child.
+ */
+exports.extend = function(child, super){
+    for (var property in super.prototype) {
+        if (typeof child.prototype[property] == "undefined") {
+            child.prototype[property] = super.prototype[property];
+        }
+    }
+    return child;
+};
 
 /**
  *	Maintains a sorted array and places items in the array
  *	based on a comparitor function. Ordering is smallest to
  *	largest.
  */
-exports.SortedArray = function(comparitor) {
+var SortedArray = function(comparitor) {
     this.array = [];
     this.comparitor = comparitor;
-    
-    this.add = function(item) {
-        var pos = 0;
-        while(pos < this.array.length && this.comparitor(item, this.array[pos]) > 0) pos++;
-        this.array.splice(pos, 0, item);
-    };
-    
-    this.removeIndex = function(index) {
-        return this.array.splice(index, 1);
-    };
-    
-    this.get = function(index) {
-        return this.array[index];
-    };
-    
-    this.set = function(index, val) {
-        this.array[index] = val;
-    };
-    
-    // Optional comparitor, uses the one from the constructor
-    // if none is provided. 
-    this.removeItem = function(item, comp) {
-        if (typeof comp == "undefined") comp = this.comparitor;
-        
-        for (var k = 0; k < this.array.length; k++) {
-            if (comp(item, this.array[k]) == 0) {
-                return this.removeIndex(k);
-            }
-        }
-        
-        return false;
-    };
-    
-    // First argument to func is the index, second is value
-    this.iter = function(func) {
-        for (var k = 0; k < this.array.length; k++) {
-            func(k, this.array[k]);
-        }
-    };
 };
+
+SortedArray.prototype.add = function(item) {
+    var pos = 0;
+    while(pos < this.array.length && this.comparitor(item, this.array[pos]) > 0) pos++;
+    this.array.splice(pos, 0, item);
+};
+
+SortedArray.prototype.removeIndex = function(index) {
+    return this.array.splice(index, 1);
+};
+
+SortedArray.prototype.get = function(index) {
+    return this.array[index];
+};
+
+SortedArray.prototype.set = function(index, val) {
+    this.array[index] = val;
+};
+
+// Optional comparitor, uses the one from the constructor
+// if none is provided. 
+SortedArray.prototype.removeItem = function(item, comp) {
+    if (typeof comp == "undefined") comp = this.comparitor;
+    
+    for (var k = 0; k < this.array.length; k++) {
+        if (comp(item, this.array[k]) == 0) {
+            return this.removeIndex(k);
+        }
+    }
+    
+    return false;
+};
+
+// First argument to func is the index, second is value
+SortedArray.prototype.iter = function(func) {
+    for (var k = 0; k < this.array.length; k++) {
+        func(k, this.array[k]);
+    }
+};
+
+// Expose class
+exports.SortedArray = SortedArray;
 
 });

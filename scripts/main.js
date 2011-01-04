@@ -83,43 +83,6 @@ bdge.setGameInit(function() {
         this.z = 100; // Z determines drawing order; higher Z = drawn on top of others
         this.shotDown = false;
         
-        /*
-         * The process function is run for each object once per frame. The
-         * main logic for the object goes here.
-         */
-        this.process = function() {
-            // Check input and set our desired movement
-            var dy = 0, dx = 0;
-            if (input.keys["up"]) dy -= 2;
-            if (input.keys["down"]) dy += 2;
-            if (input.keys["left"]) dx -= 3;
-            if (input.keys["right"]) dx += 3;
-            
-            // Check that we don't collide with the tilemap. If not, move!
-            /*if (!tilemap.collides(this.x + dx, this.y + dy, this.graphic.fWidth, this.graphic.fHeight)) {
-                this.y += dy;
-                this.x += dx;
-            }*/
-            
-            this.y += dy;
-            this.x += dx;
-            
-            // Check if the D key is pressed for shooting
-            if (input.keys["d"]) {
-                // We can only shoot once per keypress; shotdown is true if
-                // the D key is being held
-                if (!this.shotDown) {
-                    // To shoot, we create a new shot object at our current
-                    // position
-                    var shot = new Shot(this.x + 6, this.y + 4);
-                    engine.addEntity(shot);
-                    this.shotDown = true;
-                }
-            } else {
-                this.shotDown = false;
-            }
-        };
-        
         // Graphic contains information for drawing the object
         this.graphic.img = "ship";      // Refers to the ID of the graphic we want
         this.graphic.fWidth = 16;       // Width of each animation frame
@@ -128,31 +91,59 @@ bdge.setGameInit(function() {
         this.graphic.delay = 15;        // Delay between each frame; measured in frames
         this.graphic.frameCount = 2;    // Total number of frames in animation loop
     };
-    Player.prototype = new engine.Entity();
+    util.extend(Player, engine.Entity);
+    
+    /*
+     * The process function is run for each object once per frame. The
+     * main logic for the object goes here.
+     */
+    Player.prototype.process = function() {
+        // Check input and set our desired movement
+        var dy = 0, dx = 0;
+        if (input.keys["up"]) dy -= 2;
+        if (input.keys["down"]) dy += 2;
+        if (input.keys["left"]) dx -= 3;
+        if (input.keys["right"]) dx += 3;
+        
+        // Check that we don't collide with the tilemap. If not, move!
+        /*if (!tilemap.collides(this.x + dx, this.y + dy, this.graphic.fWidth, this.graphic.fHeight)) {
+            this.y += dy;
+            this.x += dx;
+        }*/
+        
+        this.y += dy;
+        this.x += dx;
+        
+        // Check if the D key is pressed for shooting
+        if (input.keys["d"]) {
+            // We can only shoot once per keypress; shotdown is true if
+            // the D key is being held
+            if (!this.shotDown) {
+                // To shoot, we create a new shot object at our current
+                // position
+                var shot = new Shot(this.x + 6, this.y + 4);
+                engine.addEntity(shot);
+                this.shotDown = true;
+            }
+        } else {
+            this.shotDown = false;
+        }
+    };
     
     // Now we create the player and assign it the ID "pc"
     var pc = new Player();
     engine.addEntity(pc, "pc");
     
     var Slug = function(x, y) {
-        engine.Entity.call(this);
+        engine.Entity.call(this); // Extend Entity
         this.x = x;
         this.y = y;
         this.z = 90;
         this.width = 16;
         this.height = 16;
         this.group = "enemy";
-        this.process = function() {
-            this.y += 1;
-            
-            if (!this.inView()) {
-                engine.removeEntity(this.id);
-            }
-        };
+        
         this.parentWave = null;
-        this.onRemove = function() {
-            if (this.parentWave != null) this.parentWave.enemyDead();
-        };
         
         this.graphic.img = "slug";
         this.graphic.fWidth = 16;
@@ -161,32 +152,26 @@ bdge.setGameInit(function() {
         this.graphic.delay = 10;
         this.graphic.frameCount = 2;
     };
-    Slug.prototype = new engine.Entity();
+    util.extend(Slug, engine.Entity); // Extend Entity
+    
+    Slug.prototype.process = function() {
+        this.y += 1;
+        
+        if (!this.inView()) {
+            engine.removeEntity(this.id);
+        }
+    };
+    
+    Slug.prototype.onRemove = function() {
+        if (this.parentWave != null) this.parentWave.enemyDead();
+    };
     
     var Background = function() {
-        engine.Entity.call(this);
+        engine.Entity.call(this); // Extend Entity
         this.x = 0;
         this.y = -240;
         this.z = -1;
-        this.process = function() {
-            this.y++;
-            if (this.y >= 0) this.y = -240;
-            
-            // Move player backwards
-            //if (this.collides(pc.x, pc.y, pc.graphic.fWidth, pc.graphic.fHeight)) pc.y++;
-        };
-        this.draw = function(ctx) {
-            var tile;
-            for (var ty = 0; ty < this.mapHeight; ty++) {
-                for (var tx = 0; tx < this.mapWidth; tx++) {
-                    tile = this.map[ty][tx];
-                    engine.bufferCtx.drawImage(loader.getData("tiles"), 
-                        tile * this.tWidth, 0, this.tWidth, this.tHeight, 
-                        this.x + (tx * this.tWidth), this.y + (ty * this.tHeight), this.tWidth, this.tHeight
-                    );
-                }
-            }
-        };
+        
         this.mapWidth = 16;
         this.mapHeight = 30;
         this.tWidth = 16;
@@ -239,54 +224,80 @@ bdge.setGameInit(function() {
                 }
             }
         },*/
-        this.isSolid = function(x, y) {
-            switch (this.map[y][x]) {
-                case 3:
-                case 4:
-                    return true;
-                default:
-                    return false;
-            }
-        };
     };
-    Background.prototype = new engine.Entity();
+    util.extend(Background, engine.Entity); // Extend Entity
+    
+    Background.prototype.process = function() {
+        this.y++;
+        if (this.y >= 0) this.y = -240;
+        
+        // Move player backwards
+        //if (this.collides(pc.x, pc.y, pc.graphic.fWidth, pc.graphic.fHeight)) pc.y++;
+    };
+    
+    Background.prototype.draw = function(ctx) {
+        var tile;
+        for (var ty = 0; ty < this.mapHeight; ty++) {
+            for (var tx = 0; tx < this.mapWidth; tx++) {
+                tile = this.map[ty][tx];
+                engine.bufferCtx.drawImage(loader.getData("tiles"), 
+                    tile * this.tWidth, 0, this.tWidth, this.tHeight, 
+                    this.x + (tx * this.tWidth), this.y + (ty * this.tHeight), this.tWidth, this.tHeight
+                );
+            }
+        }
+    };
+    
+    Background.prototype.isSolid = function(x, y) {
+        switch (this.map[y][x]) {
+            case 3:
+            case 4:
+                return true;
+            default:
+                return false;
+        }
+    };
+    
+    // Instantiate Background
     var tilemap = new Background();
     engine.addEntity(tilemap);
     
     var Shot = function(x, y) {
-        engine.Entity.call(this);
+        engine.Entity.call(this); // Extend Entity
         this.group = "shots";
         this.x = x;
         this.y = y;
         this.z = 99;
         this.width = 4;
         this.height = 8;
-        this.process = function() {
-            var oldY = this.y;
-            this.y -= 8;
-            
-            // Shot check
-            var shot = this;
-            util.forEach(engine.groups["enemy"], function(enemyId, enemy) {
-                if (util.boxCollide(
-                    shot.x, shot.y, shot.width, shot.height + (oldY - shot.y), 
-                    enemy.x, enemy.y, enemy.width, enemy.height)
-                ) {
-                    engine.removeEntity(enemyId);
-                    engine.removeEntity(shot.id);
-                    return;
-                }
-            });
-            
-            if (!this.inView()) {
-                engine.removeEntity(this.id);
-            }
-        };
+        
         this.graphic.img = "shot";
         this.graphic.fWidth = 4;
         this.graphic.fHeight = 8;
     };
-    Shot.prototype = new engine.Entity();
+    util.extend(Shot, engine.Entity); // Extend Entity
+    
+    Shot.prototype.process = function() {
+        var oldY = this.y;
+        this.y -= 8;
+        
+        // Shot check
+        var shot = this;
+        util.forEach(engine.groups["enemy"], function(enemyId, enemy) {
+            if (util.boxCollide(
+                shot.x, shot.y, shot.width, shot.height + (oldY - shot.y), 
+                enemy.x, enemy.y, enemy.width, enemy.height)
+            ) {
+                engine.removeEntity(enemyId);
+                engine.removeEntity(shot.id);
+                return;
+            }
+        });
+        
+        if (!this.inView()) {
+            engine.removeEntity(this.id);
+        }
+    };
     
     /**
      * An EnemyWave, as the name suggests, defines a preset wave of enemies.
@@ -299,11 +310,12 @@ bdge.setGameInit(function() {
     
         if (typeof props.enemyCount != "undefined") {
             this.enemyCount = props.enemyCount;
-            this.enemyDead = function() {
-                this.enemyCount--;
-                if (this.enemyCount <= 0) this.waveDone = true;
-            };
         }
+    };
+    
+    EnemyWave.prototype.enemyDead = function() {
+        this.enemyCount--;
+        if (this.enemyCount <= 0) this.waveDone = true;
     };
     
     // Spawns 10 slugs every 32 frames and waits for them to be gone
