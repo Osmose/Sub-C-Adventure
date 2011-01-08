@@ -78,6 +78,17 @@ exports.boxCollide = function(x1, y1, w1, h1, x2, y2, w2, h2) {
 };
 
 /**
+ * Returns true if the point (x,y) is within a box whose top left corner is at
+ * (bx, by) and whose width and height are bw and bh respectively.
+ */
+exports.inBounds = function(x, y, bx, by, bw, bh) {
+    if (x < bx || x >= bx + bw) return false;
+    if (y < by || y >= by + bh) return false;
+    
+    return true;
+}
+
+/**
  * Creates a new object with all the properties of base, and replaces matching
  * properties from replace.
  * 
