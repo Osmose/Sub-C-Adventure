@@ -113,12 +113,12 @@ exports.replaceProperties = function(base, replace) {
 };
 
 /**
- * Copies properties from the prototype of super to the prototype of child.
+ * Copies properties from the prototype of parent to the prototype of child.
  */
-exports.extend = function(child, super){
-    for (var property in super.prototype) {
+exports.extend = function(child, parent){
+    for (var property in parent.prototype) {
         if (typeof child.prototype[property] == "undefined") {
-            child.prototype[property] = super.prototype[property];
+            child.prototype[property] = parent.prototype[property];
         }
     }
     return child;
